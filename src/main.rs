@@ -14,7 +14,8 @@ custom_error! {SearchError
 fn search_directory(pattern: &'static str, path: String) -> (u32, u32) {
     let (mut successes, mut failures) = (0, 0);
     let dir = read_dir(path).unwrap();
-    let mut jobs: Vec<thread::JoinHandle<Result<bool, SearchError>>> = Vec::new();
+    let mut jobs: Vec<thread::JoinHandle<Result<bool, SearchError>>>
+      = Vec::new();
 
     for entry in dir {
         let entry_path = entry.unwrap().path();
@@ -25,7 +26,9 @@ fn search_directory(pattern: &'static str, path: String) -> (u32, u32) {
                 search_file(pattern, file_path)
             }));
         } else{
-            let (x, y) = search_directory(pattern, entry_path.to_str().unwrap().to_string());
+            let (x, y) = search_directory(pattern, 
+                                          entry_path.to_str()
+                                            .unwrap().to_string());
             successes += x;
             failures += y;
         }
