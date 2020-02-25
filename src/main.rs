@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::thread;
 use custom_error::custom_error;
+use clap::{App, Arg};
 
 
 custom_error! {SearchError
@@ -11,7 +12,7 @@ custom_error! {SearchError
     IncompatibleFormat = "Format was not parsable"
 }
 
-fn search_directory(pattern: &'static str, path: String) -> (u32, u32) {
+fn search_directory(pattern: String, path: String) -> (u32, u32) {
     // Record how many times `search_file` succeeded.
     let (mut successes, mut failures) = (0, 0);
 
@@ -27,13 +28,14 @@ fn search_directory(pattern: &'static str, path: String) -> (u32, u32) {
         if !entry_path.is_dir() {
             // For every file, create a thread running search_file() on it.
             let file_path = entry_path.to_str().unwrap().to_string();
-            
+            let pattern_copy = pattern.to_string();
             jobs.push(thread::spawn(move || {
-                search_file(pattern, file_path)
+                search_file(pattern_copy, file_path)
             }));
         } else {
             // For every directory, recursively call search_directory() on it.
-            let (x, y) = search_directory(pattern, 
+            let pattern_copy = pattern.to_string();
+            let (x, y) = search_directory(pattern_copy, 
                                           entry_path.to_str()
                                             .unwrap().to_string());
 
@@ -56,12 +58,13 @@ fn search_directory(pattern: &'static str, path: String) -> (u32, u32) {
     (successes, failures)
 }
 
-fn search_file(pattern: &str, path: String) -> Result<bool, SearchError> {
+fn search_file(pattern: String, path: String) -> Result<bool, SearchError> {
     // Use return_value to record whether this function successfully processed
     // the given file or not.
     let mut return_value = true;
 
-    let test = Regex::new(pattern).unwrap();
+    let pattern_slice = &pattern[..];
+    let test = Regex::new(pattern_slice).unwrap();
     let path = Path::new(&path);
     let file = match File::open(path) {
         Ok(x) => x,
@@ -87,9 +90,29 @@ fn search_file(pattern: &str, path: String) -> Result<bool, SearchError> {
 
 
 fn main() {
-    // Regex pattern and target directory are currently hardcoded, however this
-    // function is designed in such a way that implementing custom values is
-    // trivial once CLI arguments are being parsed.
-    let outcome = search_directory(r"[Ss]hrek", "./Content/".to_string());
+    // Handle command-line arguments
+    let matches = App::new("trotline")
+                    .version("0.2.0")
+                    .author("Suede G")
+                    .about("Simplified grep clone")
+                    .arg(Arg::with_name("pattern")
+                           .required(true)
+                           .help("regex search pattern")
+                           .index(1)
+                           .takes_value(true))
+                    .arg(Arg::with_name("directory")
+                           .index(2)
+                           .help("target directory")
+                           .takes_value(true))
+                    .get_matches();
+    
+    let pattern = matches.value_of("pattern").unwrap().to_string();
+
+    // If no directory was given at command-line, use current working directory
+    // as default.
+    let directory = matches.value_of("directory").unwrap_or("./").to_string();
+
+    let outcome = search_directory(pattern, directory);
     println!("\nSuccesses:\t{}\nFailures:\t{}", outcome.0, outcome.1);
+
 }
