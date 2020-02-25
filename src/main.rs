@@ -92,7 +92,7 @@ fn search_file(pattern: String, path: String) -> Result<bool, SearchError> {
 fn main() {
     // Handle command-line arguments
     let matches = App::new("trotline")
-                    .version("1.0.0")
+                    .version("1.0.1")
                     .author("Suede G")
                     .about("Simplified grep clone")
                     .arg(Arg::with_name("pattern")

@@ -1,9 +1,10 @@
 [package]
 name = "trotline"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["suedeg"]
 edition = "2018"
 license = "MIT"
+readme = "./README.md"
 description = "A worse version of grep written as practice in concurrency and file IO. "
 repository = "https://github.com/SuedeGently/trotline"
 
