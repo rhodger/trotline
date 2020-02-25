@@ -3,6 +3,9 @@ name = "trotline"
 version = "1.0.0"
 authors = ["suedeg"]
 edition = "2018"
+license = "MIT"
+description = "A worse version of grep written as practice in concurrency and file IO. "
+repository = "https://github.com/SuedeGently/trotline"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
