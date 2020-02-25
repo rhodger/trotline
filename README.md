@@ -4,20 +4,34 @@ This is just a project I'm using to learn concurrency and file IO in Rust; it is
 
 Trotline cretes a new thread for every file being searched then uses regex to identify and print to stdout every line containing the desired pattern. As it stands, the regex and target directory are both hardcoded, but this will be fixed before final release. It also ignores all binary files.
 
-## Usage
+## Installation
 
-In its current state, to use trotline clone this repo then from within it run:
-```rust
-cargo run --release
+To install, ensure you have the requirements listed below, then run:
+```bash
+cargo install --git "https://github.com/SuedeGently/trotline.git"
 ```
+then `trotline --version` to check its installed correctly.
 
 ### Requirements
 
 * The rust toolchain (rustup, cargo)
 * A test directory (A directory in the repo named Content that contains files to be searched.)
 
-### Notes
-This is only a temporary usecase, the final version will have fill CLI support with arguments and will require a regex pattern to be run.
+## Usage
+
+```
+    trotline <pattern> [directory]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+ARGS:
+    <pattern>      regex search pattern
+    <directory>    target directory
+```
+
+Where `pattern` can be any valid regex string. If no directory is specified, the current working directory will be used instead.
 
 
 [ripgrep]: https://github.com/BurntSushi/ripgrep
