@@ -2,7 +2,7 @@
 
 This is just a project I'm using to learn concurrency and file IO in Rust; it isn't fit for any real-world use. If you're looking for a genuinely very useful grep alternative, try [ripgrep][ripgrep], a genuinely very impressive and generally faster search tool also written in Rust.
 
-Trotline cretes a new thread for every file being searched then uses regex to identify and print to stdout every line containing the desired pattern. All binary files are ignored.
+Trotline creates a new thread for every file being searched then uses regex to identify and print to stdout every line containing the desired pattern. All binary files are ignored.
 
 ## Installation
 
