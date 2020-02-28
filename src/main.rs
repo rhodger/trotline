@@ -12,7 +12,7 @@ custom_error! {SearchError
     IncompatibleFormat = "Format was not parsable"
 }
 
-fn search_directory(pattern: String, path: String) -> (u32, u32) {
+fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
     // Record how many times `search_file` succeeded.
     let (mut successes, mut failures) = (0, 0);
 
@@ -30,14 +30,15 @@ fn search_directory(pattern: String, path: String) -> (u32, u32) {
             let file_path = entry_path.to_str().unwrap().to_string();
             let pattern_copy = pattern.to_string();
             jobs.push(thread::spawn(move || {
-                search_file(pattern_copy, file_path)
+                search_file(pattern_copy, file_path, nocase)
             }));
         } else {
             // For every directory, recursively call search_directory() on it.
             let pattern_copy = pattern.to_string();
             let (x, y) = search_directory(pattern_copy, 
                                           entry_path.to_str()
-                                            .unwrap().to_string());
+                                            .unwrap().to_string(),
+                                          nocase);
 
             // Combine this instance of search_directory()'s results with those
             // of the recursive call that just completed.
@@ -58,7 +59,7 @@ fn search_directory(pattern: String, path: String) -> (u32, u32) {
     (successes, failures)
 }
 
-fn search_file(pattern: String, path: String) -> Result<bool, SearchError> {
+fn search_file(pattern: String, path: String, nocase: bool) -> Result<bool, SearchError> {
     // Use return_value to record whether this function successfully processed
     // the given file or not.
     let mut return_value = true;
@@ -79,7 +80,9 @@ fn search_file(pattern: String, path: String) -> Result<bool, SearchError> {
             Ok(x) => x,
             Err(_) => return Err(SearchError::IncompatibleFormat)
         };
-        if test.is_match(&line_str) {
+        let mut comparison_str = line_str.to_string();
+        if nocase { comparison_str = comparison_str.to_lowercase() }
+        if test.is_match(&comparison_str) {
             println!("{}:\t{}", path.display(), line_str);
             return_value = true;
         }
@@ -92,7 +95,7 @@ fn search_file(pattern: String, path: String) -> Result<bool, SearchError> {
 fn main() {
     // Handle command-line arguments
     let matches = App::new("trotline")
-                    .version("1.0.1")
+                    .version("1.1.0")
                     .author("Suede G")
                     .about("Simplified grep clone")
                     .arg(Arg::with_name("pattern")
@@ -104,15 +107,26 @@ fn main() {
                            .index(2)
                            .help("target directory")
                            .takes_value(true))
+                    .arg(Arg::with_name("nocase")
+                           .help("ignore case")
+                           .short("i")
+                           .long("ignore_case")
+                           .takes_value(false))
                     .get_matches();
-    
-    let pattern = matches.value_of("pattern").unwrap().to_string();
+
+    let mut nocase = false;
+    let mut pattern = matches.value_of("pattern").unwrap().to_string();
+
+    if matches.occurrences_of("nocase") > 0 {
+        pattern = pattern.to_lowercase();
+        nocase = true;
+    }
 
     // If no directory was given at command-line, use current working directory
     // as default.
     let directory = matches.value_of("directory").unwrap_or("./").to_string();
 
-    let outcome = search_directory(pattern, directory);
+    let outcome = search_directory(pattern, directory, nocase);
     println!("\nSuccesses:\t{}\nFailures:\t{}", outcome.0, outcome.1);
 
 }

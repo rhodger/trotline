@@ -1,6 +1,6 @@
 [package]
 name = "trotline"
-version = "1.0.1"
+version = "1.1.0"
 authors = ["suedeg"]
 edition = "2018"
 license = "MIT"
