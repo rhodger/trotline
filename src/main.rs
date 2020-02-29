@@ -1,4 +1,4 @@
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use std::fs::{File, read_dir};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
@@ -19,8 +19,8 @@ fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
     let dir = read_dir(path).unwrap();
 
     // Holds a handle for each spawned thread so they can be joined later.
-    let mut jobs: Vec<thread::JoinHandle<Result<bool, SearchError>>>
-      = Vec::new();
+    let mut jobs: Vec<thread::JoinHandle<Result<bool, SearchError>>> =
+      Vec::new();
 
     for entry in dir {
         let entry_path = entry.unwrap().path();
@@ -36,8 +36,10 @@ fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
             // For every directory, recursively call search_directory() on it.
             let pattern_copy = pattern.to_string();
             let (x, y) = search_directory(pattern_copy, 
-                                          entry_path.to_str()
-                                            .unwrap().to_string(),
+                                          entry_path
+                                            .to_str()
+                                            .unwrap()
+                                            .to_string(),
                                           nocase);
 
             // Combine this instance of search_directory()'s results with those
@@ -59,13 +61,20 @@ fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
     (successes, failures)
 }
 
-fn search_file(pattern: String, path: String, nocase: bool) -> Result<bool, SearchError> {
+fn search_file(pattern: String, path: String, nocase: bool) ->
+  Result<bool, SearchError> {
     // Use return_value to record whether this function successfully processed
     // the given file or not.
     let mut return_value = true;
 
     let pattern_slice = &pattern[..];
-    let test = Regex::new(pattern_slice).unwrap();
+    let mut test = Regex::new(pattern_slice).unwrap();
+    if nocase {
+        test = RegexBuilder::new(pattern_slice)
+                 .case_insensitive(true)
+                 .build()
+                 .unwrap();
+    }
     let path = Path::new(&path);
     let file = match File::open(path) {
         Ok(x) => x,
@@ -80,9 +89,7 @@ fn search_file(pattern: String, path: String, nocase: bool) -> Result<bool, Sear
             Ok(x) => x,
             Err(_) => return Err(SearchError::IncompatibleFormat)
         };
-        let mut comparison_str = line_str.to_string();
-        if nocase { comparison_str = comparison_str.to_lowercase() }
-        if test.is_match(&comparison_str) {
+        if test.is_match(&line_str) {
             println!("{}:\t{}", path.display(), line_str);
             return_value = true;
         }
@@ -115,12 +122,9 @@ fn main() {
                     .get_matches();
 
     let mut nocase = false;
-    let mut pattern = matches.value_of("pattern").unwrap().to_string();
+    let pattern = matches.value_of("pattern").unwrap().to_string();
 
-    if matches.occurrences_of("nocase") > 0 {
-        pattern = pattern.to_lowercase();
-        nocase = true;
-    }
+    if matches.occurrences_of("nocase") > 0 { nocase = true }
 
     // If no directory was given at command-line, use current working directory
     // as default.
