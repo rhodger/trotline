@@ -19,11 +19,12 @@ then `trotline --version` to check its installed correctly.
 ## Usage
 
 ```
-    trotline <pattern> [directory]
+    trotline [FLAGS] <pattern> [directory]
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help           Prints help information
+    -i, --ignore_case    ignore case
+    -V, --version        Prints version information
 
 ARGS:
     <pattern>      regex search pattern
