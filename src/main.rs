@@ -1,3 +1,7 @@
+//! Trotline is a simplified grep clone written as concurrency
+//! learning/practice. See the Crates.io page for more, or, for usage
+//! instructions, run `trotline --help`.
+
 use regex::{Regex, RegexBuilder};
 use std::fs::{File, read_dir};
 use std::io::{BufRead, BufReader};
@@ -7,11 +11,28 @@ use custom_error::custom_error;
 use clap::{App, Arg};
 
 
-custom_error! {SearchError
-    FileNotFound = "File not found",
-    IncompatibleFormat = "Format was not parsable"
+custom_error! {
+    /// Custom errors for dealing with predictable issues.
+    SearchError
+        /// Tried to open a nonexistant file. This would likely be due to an
+        /// issue with `read_dir()`, though no such issue has ever occurred.
+        FileNotFound = "File not found",
+    
+        /// IncompatibleFormat is for non-UTF-8 found within otherwise parsable
+        /// files; this may not even be a thing that can happen, but better safe
+        /// than sorry.
+        IncompatibleFormat = "Format was not parsable"
 }
 
+/// Searches an entire directory
+/// 
+/// Searches a given directory file-by-file by calling `search_file()`. When a
+/// nested directory is found, this function recursively calls itself on that
+/// directory. The returned tuple represents the amount of
+/// successful/unsuccesful attempts to read a file.
+/// 
+/// Every instance of `search_file()` is called in a separate thread, ensuring
+/// maximum efficiency.
 fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
     // Record how many times `search_file` succeeded.
     let (mut successes, mut failures) = (0, 0);
@@ -61,6 +82,11 @@ fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
     (successes, failures)
 }
 
+/// Searches a single file
+///
+/// This function searches a parsable (UTF-8) file line-by-line for the given
+/// regex pattern. When a match is found, the entire line is printed to stdout
+/// along with the name of file in which it was found.
 fn search_file(pattern: String, path: String, nocase: bool) ->
   Result<bool, SearchError> {
     // Use return_value to record whether this function successfully processed
@@ -98,7 +124,10 @@ fn search_file(pattern: String, path: String, nocase: bool) ->
     Ok(return_value)
 }
 
-
+/// Main loop
+///
+/// Parses command-line arguments and calls the first iteration of
+/// `search_directory()` on the desired directory.
 fn main() {
     // Handle command-line arguments
     let matches = App::new("trotline")
