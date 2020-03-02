@@ -89,9 +89,9 @@ fn search_directory(pattern: String, path: String, nocase: bool) -> (u32, u32) {
 /// along with the name of file in which it was found.
 fn search_file(pattern: String, path: String, nocase: bool) ->
   Result<bool, SearchError> {
-    // Use return_value to record whether this function successfully processed
-    // the given file or not.
-    let mut return_value = true;
+    // Use return_value to record whether this function successfully located the
+    // given value or not.
+    let mut return_value = false;
 
     let pattern_slice = &pattern[..];
     let mut test = Regex::new(pattern_slice).unwrap();
@@ -163,3 +163,50 @@ fn main() {
     println!("\nSuccesses:\t{}\nFailures:\t{}", outcome.0, outcome.1);
 
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    /// Tests case-sensitive file searching
+    #[test]
+    fn search_file_sensitive() {
+        let patterns = [".*".to_string(),
+                        "gamma".to_string(),
+                        "burger".to_string()];
+        let case_results = [true, false, false];
+        
+        for i in 0..3 {
+            let result = search_file(patterns[i].to_string(),
+                                     "./Tests/file1.txt".to_string(),
+                                     false).unwrap();
+            assert_eq!(result, case_results[i]);
+        }
+    }
+
+    /// Tests case-insensitive file searching
+    #[test]
+    fn search_file_insensitive() {
+        let patterns = [".*".to_string(),
+                        "gamma".to_string(),
+                        "burger".to_string()];
+        let case_results = [true, true, false];
+
+        for i in 0..3 {
+            let result = search_file(patterns[i].to_string(),
+                                     "./Tests/file1.txt".to_string(),
+                                     true).unwrap();
+            assert_eq!(result, case_results[i]);
+        }
+    }
+
+    /// Tests (barely) directory searching
+    #[test]
+    fn search_directory_test() {
+        assert_eq!(search_directory(".*".to_string(),
+                                    "./Tests/".to_string(),
+                                    false),
+                   (3, 0));
+    }
+}
+
